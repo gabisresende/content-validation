@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Validação de Conteúdo — Content Design Ops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<style>
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --surface2: #F0EEE8;
+    --border: #E2DED6;
+    --border2: #CBC7BF;
+    --text: #1A1916;
+    --text2: #6B6861;
+    --text3: #A09C97;
+    --accent: #1A1916;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+  /* LAYOUT */
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; z-index: 10; }
+  .main { margin-left: 220px; flex: 1; padding: 2rem; max-width: 900px; }
+
+  /* SIDEBAR */
+  .sidebar-header { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid var(--border); }
+  .sidebar-logo { font-size: 13px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .sidebar-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text); }
+  .sidebar-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .nav-section { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; padding: 14px 1.25rem 5px; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 7px 1.25rem; cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.12s; border-left: 2px solid transparent; }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--bg); color: var(--text); font-weight: 500; border-left-color: var(--text); }
+  .nav-item i { font-size: 15px; flex-shrink: 0; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { margin-bottom: 1.75rem; }
+  .page-title { font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .page-sub { font-size: 13px; color: var(--text2); }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
+
+  /* METRICS */
+  .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .metric-label { font-size: 11px; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .metric-value { font-size: 26px; font-weight: 500; color: var(--text); line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* FORMS */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+  input, select, textarea {
+    font-size: 13px; font-family: var(--font);
+    border-radius: var(--radius); border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+    padding: 8px 11px; width: 100%;
+    transition: border-color 0.12s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--border2); background: var(--surface); }
+  textarea { resize: vertical; min-height: 56px; }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font); font-size: 13px; font-weight: 500; border-radius: var(--radius); padding: 8px 16px; cursor: pointer; border: 1px solid transparent; transition: all 0.12s; }
+  .btn-primary { background: var(--text); color: var(--bg); }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-outline { background: transparent; border-color: var(--border2); color: var(--text); }
+  .btn-outline:hover { background: var(--surface2); }
+  .btn-ghost { background: transparent; border-color: transparent; color: var(--text2); padding: 6px 10px; font-size: 12px; }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: transparent; border-color: #F09595; color: #A32D2D; padding: 5px 10px; font-size: 12px; }
+  .btn-danger:hover { background: #FCEBEB; }
+  .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 1.25rem; }
+
+  /* BADGES */
+  .badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+  .badge-critico { background: #FCEBEB; color: #A32D2D; }
+  .badge-alto { background: #FAEEDA; color: #854F0B; }
+  .badge-medio { background: #E6F1FB; color: #185FA5; }
+  .badge-baixo { background: #EAF3DE; color: #3B6D11; }
+  .badge-evitavel { background: #FBEAF0; color: #993556; border: 1px solid #F4C0D1; }
+  .badge-cat { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .mat-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+
+  /* CHECKLIST */
+  .checklist-grid { display: flex; flex-direction: column; gap: 5px; }
+  .check-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 11px; border-radius: var(--radius); border: 1px solid var(--border); cursor: pointer; background: var(--bg); transition: all 0.12s; }
+  .check-item:hover { border-color: var(--border2); background: var(--surface); }
+  .check-item.checked { border-color: #C0DD97; background: #EAF3DE; }
+  .check-box { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; background: var(--surface); transition: all 0.12s; }
+  .check-item.checked .check-box { background: #639922; border-color: #639922; }
+  .check-icon { font-size: 11px; color: #fff; display: none; }
+  .check-item.checked .check-icon { display: block; }
+  .check-text { font-size: 13px; color: var(--text); line-height: 1.45; flex: 1; }
+  .check-item.checked .check-text { color: #3B6D11; }
+  .check-pts { font-size: 11px; color: var(--text3); flex-shrink: 0; padding-top: 2px; font-family: var(--mono); }
+  .check-item.checked .check-pts { color: #639922; }
+
+  /* MATURIDADE METER */
+  .mat-meter { margin-top: 12px; padding: 11px 14px; border-radius: var(--radius); border: 1px solid var(--border); display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
+  .mat-meter-label { font-size: 13px; font-weight: 500; min-width: 110px; }
+  .mat-meter-bar { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .mat-meter-fill { height: 100%; border-radius: 3px; transition: width 0.35s ease; }
+  .mat-meter-pts { font-size: 12px; color: var(--text3); font-family: var(--mono); white-space: nowrap; }
+
+  /* ERROR TYPE SELECTOR */
+  .cat-tab-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+  .cat-tab { font-size: 12px; padding: 5px 13px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; background: var(--surface); color: var(--text2); transition: all 0.12s; }
+  .cat-tab:hover { border-color: var(--border2); color: var(--text); }
+  .cat-tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .error-type-grid { display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+  .error-type-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; background: transparent; transition: background 0.1s; border-bottom: 1px solid var(--border); }
+  .error-type-item:last-child { border-bottom: none; }
+  .error-type-item:hover { background: var(--bg); }
+  .error-type-item.selected { background: var(--surface2); }
+  .error-type-name { font-size: 13px; color: var(--text); flex: 1; }
+  .error-avoidable-tag { font-size: 11px; padding: 1px 7px; border-radius: 20px; background: #FBEAF0; color: #993556; border: 1px solid #F4C0D1; white-space: nowrap; }
+
+  /* ERROR LIST */
+  .error-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 1rem; }
+  .error-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 13px; }
+  .error-item-header { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; flex-wrap: wrap; }
+  .error-item-desc { font-size: 12px; color: var(--text2); margin-top: 3px; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+
+  /* PROGRESS */
+  .progress-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); }
+  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--text3); font-size: 13px; }
+  .empty-state i { font-size: 36px; display: block; margin-bottom: 10px; color: var(--border2); }
+
+  /* CHIPS */
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+
+  /* DESIGNER CARD */
+  .designer-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .mat-trend { display: flex; gap: 4px; align-items: flex-end; height: 36px; }
+  .mat-trend-bar { flex: 1; border-radius: 2px 2px 0 0; min-width: 8px; }
+
+  /* SAVE MSG */
+  .save-msg { font-size: 12px; color: #3B6D11; display: none; align-items: center; gap: 4px; }
+  .save-msg i { font-size: 15px; }
+
+  /* REGUA */
+  .regua-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+  /* SELECTED PREVIEW */
+  #selected-type-preview { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  @media (max-width: 720px) {
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .main { margin-left: 0; padding: 1rem; }
+    .metric-grid { grid-template-columns: 1fr 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .shell { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><div class="sidebar-logo-dot"></div> Content Ops</div>
+      <div class="sidebar-sub">Validação de conteúdo</div>
+    </div>
+    <div class="nav-section">Validação</div>
+    <div class="nav-item active" onclick="nav('nova')" id="nav-nova"><i class="ti ti-plus"></i> Nova validação</div>
+    <div class="nav-item" onclick="nav('historico')" id="nav-historico"><i class="ti ti-list"></i> Histórico</div>
+    <div class="nav-section">Métricas</div>
+    <div class="nav-item" onclick="nav('dashboard')" id="nav-dashboard"><i class="ti ti-chart-bar"></i> Dashboard</div>
+    <div class="nav-item" onclick="nav('designers')" id="nav-designers"><i class="ti ti-users"></i> Por designer</div>
+    <div class="nav-section">Referência</div>
+    <div class="nav-item" onclick="nav('taxonomia')" id="nav-taxonomia"><i class="ti ti-tag"></i> Taxonomia</div>
+    <div class="nav-item" onclick="nav('regua')" id="nav-regua"><i class="ti ti-ruler"></i> Régua</div>
+  </nav>
+
+  <div class="main">
+
+    <!-- NOVA VALIDAÇÃO -->
+    <div class="page active" id="page-nova">
+      <div class="page-header">
+        <div class="page-title">Nova validação</div>
+        <div class="page-sub">Preencha o contexto, avalie a maturidade e registre os erros encontrados.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Contexto da entrega</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Designer responsável</label>
+            <input type="text" id="f-designer" placeholder="Nome do CD" />
+          </div>
+          <div class="form-group">
+            <label>Jornada / produto</label>
+            <input type="text" id="f-jornada" placeholder="Ex: Fatura digital — Vivo Fibra" />
+          </div>
+          <div class="form-group">
+            <label>Rodada de validação</label>
+            <select id="f-rodada">
+              <option value="1">1ª rodada</option>
+              <option value="2">2ª rodada</option>
+              <option value="3">3ª rodada ou mais</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="f-data" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Índice de maturidade — checklist</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">Marque os critérios observáveis presentes nesta entrega. O nível é calculado automaticamente pela pontuação.</p>
+        <div class="checklist-grid" id="checklist-container"></div>
+        <div class="mat-meter" id="mat-meter">
+          <div class="mat-meter-label" id="mat-meter-label" style="color:var(--text3)">Sem critérios marcados</div>
+          <div class="mat-meter-bar"><div class="mat-meter-fill" id="mat-meter-fill" style="width:0%;background:var(--border2)"></div></div>
+          <div class="mat-meter-pts" id="mat-meter-pts">0 / 9 pts</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Adicionar erro</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">Selecione o tipo de erro — a gravidade já está pré-definida pela equipe.</p>
+        <div class="cat-tab-row" id="cat-tabs"></div>
+        <div class="error-type-grid" id="error-type-list"></div>
+        <div style="margin-top:10px;">
+          <label>Contexto / observação (opcional)</label>
+          <textarea id="e-desc" placeholder="Ex: tela de confirmação de pagamento, fluxo de segunda via..." style="margin-top:5px;"></textarea>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="addError()"><i class="ti ti-plus"></i> Adicionar erro</button>
+          <div id="selected-type-preview">Selecione um tipo acima</div>
+        </div>
+      </div>
+
+      <div id="errors-preview" class="error-list"></div>
+      <div id="no-errors" class="empty-state">
+        <i class="ti ti-file-check"></i>
+        Nenhum erro adicionado ainda
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveValidation()"><i class="ti ti-check"></i> Finalizar validação</button>
+        <button class="btn btn-outline" onclick="clearForm()">Limpar</button>
+        <div class="save-msg" id="save-msg"><i class="ti ti-circle-check"></i> Validação salva!</div>
+      </div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="page" id="page-historico">
+      <div class="page-header">
+        <div class="page-title">Histórico de validações</div>
+        <div class="page-sub">Todas as validações registradas pela equipe nesta sessão.</div>
+      </div>
+      <div id="hist-content"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard de métricas</div>
+        <div class="page-sub">Visão geral da qualidade das entregas.</div>
+      </div>
+      <div id="dash-content"></div>
+    </div>
+
+    <!-- POR DESIGNER -->
+    <div class="page" id="page-designers">
+      <div class="page-header">
+        <div class="page-title">Por designer</div>
+        <div class="page-sub">Evolução individual, maturidade e taxa de aprovação.</div>
+      </div>
+      <div id="designers-content"></div>
+    </div>
+
+    <!-- TAXONOMIA -->
+    <div class="page" id="page-taxonomia">
+      <div class="page-header">
+        <div class="page-title">Taxonomia de erros</div>
+        <div class="page-sub">Lista fechada de tipos de erro com gravidade pré-definida. Edite conforme a realidade da equipe.</div>
+      </div>
+      <div id="taxonomia-content"></div>
+    </div>
+
+    <!-- RÉGUA -->
+    <div class="page" id="page-regua">
+      <div class="page-header">
+        <div class="page-title">Régua de maturidade</div>
+        <div class="page-sub">Critérios objetivos e pontuação de cada nível.</div>
+      </div>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px;">
+        <div style="flex:2;background:#E24B4A"></div>
+        <div style="flex:4;background:#EF9F27"></div>
+        <div style="flex:3;background:#639922"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:1.5rem;">
+        <span>Baixa · 0–2 pts</span><span>Média · 3–6 pts</span><span>Alta · 7–9 pts</span>
+      </div>
+      <div id="regua-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const CHECKLIST = [
+  { id:'doc',    text:'Decisões de conteúdo estão documentadas no Figma', pts:2 },
+  { id:'alt',    text:'Apresenta ao menos uma alternativa de texto explorada', pts:1 },
+  { id:'cons',   text:'Consistente com outras jornadas do mesmo produto', pts:2 },
+  { id:'vivaz',  text:'Segue o Vivaz sem exceções não justificadas', pts:1 },
+  { id:'gloss',  text:'Usa os termos oficiais do glossário corretamente', pts:1 },
+  { id:'access', text:'Considera acessibilidade (alternativas, hierarquia, clareza)', pts:1 },
+  { id:'tom',    text:'Tom e voz adequados ao contexto e ao produto', pts:1 },
+];
+const MAX_PTS = CHECKLIST.reduce((s,c)=>s+c.pts,0);
+
+const MAT = [
+  { min:7, max:9, level:'alta',  label:'Alta maturidade',  color:'#3B6D11', bg:'#EAF3DE', border:'#C0DD97', fill:'#639922' },
+  { min:3, max:6, level:'media', label:'Média maturidade', color:'#854F0B', bg:'#FAEEDA', border:'#FAC775', fill:'#EF9F27' },
+  { min:0, max:2, level:'baixa', label:'Baixa maturidade', color:'#A32D2D', bg:'#FCEBEB', border:'#F09595', fill:'#E24B4A' },
+];
+
+const TAXONOMY = {
+  'Estilo': [
+    { name:'Pontuação incorreta ou inconsistente',    sev:'baixo', avoidable:true  },
+    { name:'Capitalização fora do padrão Vivaz',      sev:'baixo', avoidable:true  },
+    { name:'Uso de negrito/itálico sem critério',     sev:'baixo', avoidable:false },
+    { name:'Comprimento de texto fora da diretriz',   sev:'medio', avoidable:true  },
+    { name:'Truncamento sem ellipsis adequado',       sev:'medio', avoidable:false },
+  ],
+  'Padrões': [
+    { name:'Termo divergente do glossário oficial',                        sev:'critico', avoidable:true  },
+    { name:'Padrão de componente não seguido (label, placeholder, CTA)',   sev:'alto',    avoidable:true  },
+    { name:'Fluxo com lógica textual inconsistente entre telas',           sev:'alto',    avoidable:false },
+    { name:'Exceção ao padrão sem justificativa documentada',              sev:'medio',   avoidable:false },
+    { name:'Reutilização incorreta de string de outro contexto',           sev:'alto',    avoidable:false },
+  ],
+  'Tom e Voz': [
+    { name:'Tom inadequado ao contexto (ex: leveza em erro crítico)',             sev:'alto',  avoidable:true  },
+    { name:'Voz inconsistente com o produto (mais formal/informal que o padrão)', sev:'medio', avoidable:true  },
+    { name:'Linguagem técnica exposta ao usuário final',                          sev:'alto',  avoidable:false },
+    { name:'Texto genérico sem personalidade da marca',                           sev:'baixo', avoidable:false },
+  ],
+  'Acessibilidade': [
+    { name:'CTA sem contexto (ex: "clique aqui", "saiba mais" solto)', sev:'critico', avoidable:true  },
+    { name:'Mensagem de erro sem instrução de ação',                    sev:'critico', avoidable:true  },
+    { name:'Ausência de alternativa textual para elemento visual',      sev:'alto',    avoidable:false },
+    { name:'Hierarquia de informação prejudicada',                      sev:'alto',    avoidable:false },
+    { name:'Texto com ambiguidade que compromete compreensão',          sev:'medio',   avoidable:false },
+  ],
+};
+
+const SEV = {
+  critico:{ bg:'#FCEBEB', color:'#A32D2D', label:'Crítico'  },
+  alto:   { bg:'#FAEEDA', color:'#854F0B', label:'Alto'     },
+  medio:  { bg:'#E6F1FB', color:'#185FA5', label:'Médio'    },
+  baixo:  { bg:'#EAF3DE', color:'#3B6D11', label:'Baixo'    },
+};
+
+let checkedItems = new Set();
+let currentErrors = [];
+let selectedErrorType = null;
+let selectedCat = 'Estilo';
+let validations = [];
+
+// helpers
+function matFromPts(pts){ return MAT.find(t=>pts>=t.min&&pts<=t.max)||MAT[2]; }
+function sevBadge(sev){ const m=SEV[sev]; return `<span class="badge" style="background:${m.bg};color:${m.color}">${m.label}</span>`; }
+function matPill(level){ const t=MAT.find(t=>t.level===level)||MAT[2]; return `<span class="mat-pill" style="background:${t.bg};color:${t.color};border:1px solid ${t.border}">${t.label}</span>`; }
+
+// CHECKLIST
+function buildChecklist(){
+  document.getElementById('checklist-container').innerHTML = CHECKLIST.map(c=>`
+    <div class="check-item" id="ci-${c.id}" onclick="toggleCheck('${c.id}')">
+      <div class="check-box" id="cb-${c.id}"><i class="ti ti-check check-icon" id="ck-${c.id}"></i></div>
+      <div class="check-text">${c.text}</div>
+      <div class="check-pts">+${c.pts}pt${c.pts>1?'s':''}</div>
+    </div>`).join('');
+}
+function toggleCheck(id){
+  checkedItems.has(id)?checkedItems.delete(id):checkedItems.add(id);
+  document.getElementById('ci-'+id).classList.toggle('checked',checkedItems.has(id));
+  document.getElementById('ck-'+id).style.display = checkedItems.has(id)?'block':'none';
+  updateMeter();
+}
+function updateMeter(){
+  const pts = CHECKLIST.filter(c=>checkedItems.has(c.id)).reduce((s,c)=>s+c.pts,0);
+  const mat = matFromPts(pts);
+  const pct = Math.round((pts/MAX_PTS)*100);
+  document.getElementById('mat-meter-fill').style.width = pct+'%';
+  document.getElementById('mat-meter-fill').style.background = mat.fill;
+  document.getElementById('mat-meter-label').textContent = mat.label;
+  document.getElementById('mat-meter-label').style.color = mat.color;
+  document.getElementById('mat-meter').style.borderColor = mat.border;
+  document.getElementById('mat-meter').style.background = mat.bg;
+  document.getElementById('mat-meter-pts').textContent = pts+' / '+MAX_PTS+' pts';
+}
+
+// CAT TABS
+function buildCatTabs(){
+  document.getElementById('cat-tabs').innerHTML = Object.keys(TAXONOMY).map(cat=>
+    `<div class="cat-tab${cat===selectedCat?' active':''}" onclick="selectCat('${cat}')">${cat}</div>`
+  ).join('');
+}
+function selectCat(cat){
+  selectedCat=cat; selectedErrorType=null;
+  buildCatTabs(); buildErrorTypeList(); updateSelectedPreview();
+}
+
+// ERROR TYPES
+function buildErrorTypeList(){
+  document.getElementById('error-type-list').innerHTML = (TAXONOMY[selectedCat]||[]).map((t,i)=>`
+    <div class="error-type-item${selectedErrorType&&selectedErrorType.cat===selectedCat&&selectedErrorType.idx===i?' selected':''}"
+      onclick="selectErrorType('${selectedCat}',${i})">
+      <div class="error-type-name">${t.name}</div>
+      ${t.avoidable?'<span class="error-avoidable-tag"><i class="ti ti-alert-triangle"></i> Evitável</span>':''}
+      <span class="badge" style="background:${SEV[t.sev].bg};color:${SEV[t.sev].color}">${SEV[t.sev].label}</span>
+    </div>`).join('');
+}
+function selectErrorType(cat,idx){
+  selectedErrorType={cat,idx}; buildErrorTypeList(); updateSelectedPreview();
+}
+function updateSelectedPreview(){
+  const el=document.getElementById('selected-type-preview');
+  if(!selectedErrorType){ el.innerHTML='<span style="color:var(--text3)">Selecione um tipo acima</span>'; return; }
+  const t=TAXONOMY[selectedErrorType.cat][selectedErrorType.idx];
+  el.innerHTML=`<span style="color:var(--text2)">${t.name}</span> ${sevBadge(t.sev)}`;
+}
+
+// ADD ERROR
+function addError(){
+  if(!selectedErrorType){ alert('Selecione um tipo de erro.'); return; }
+  const t=TAXONOMY[selectedErrorType.cat][selectedErrorType.idx];
+  const desc=document.getElementById('e-desc').value.trim();
+  currentErrors.push({cat:selectedErrorType.cat,name:t.name,sev:t.sev,avoidable:t.avoidable,desc});
+  document.getElementById('e-desc').value='';
+  selectedErrorType=null; buildErrorTypeList(); updateSelectedPreview(); renderCurrentErrors();
+}
+function removeError(i){ currentErrors.splice(i,1); renderCurrentErrors(); }
+function renderCurrentErrors(){
+  const cont=document.getElementById('errors-preview');
+  const empty=document.getElementById('no-errors');
+  if(!currentErrors.length){ cont.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  cont.innerHTML=currentErrors.map((e,i)=>`
+    <div class="error-item">
+      <div class="error-item-header">
+        ${sevBadge(e.sev)}
+        <span class="badge badge-cat">${e.cat}</span>
+        <span style="font-size:13px;flex:1">${e.name}</span>
+        ${e.avoidable?'<span class="badge badge-evitavel"><i class="ti ti-alert-triangle"></i> Evitável</span>':''}
+        <button class="btn btn-danger" onclick="removeError(${i})"><i class="ti ti-trash"></i></button>
+      </div>
+      ${e.desc?`<div class="error-item-desc">${e.desc}</div>`:''}
+    </div>`).join('');
+}
+
+// SAVE
+function saveValidation(){
+  const designer=document.getElementById('f-designer').value.trim();
+  const jornada=document.getElementById('f-jornada').value.trim();
+  const rodada=parseInt(document.getElementById('f-rodada').value);
+  const data=document.getElementById('f-data').value||new Date().toISOString().split('T')[0];
+  if(!designer||!jornada){ alert('Preencha o nome do designer e a jornada.'); return; }
+  if(!currentErrors.length){ alert('Adicione ao menos um erro antes de finalizar.'); return; }
+  const pts=CHECKLIST.filter(c=>checkedItems.has(c.id)).reduce((s,c)=>s+c.pts,0);
+  const mat=matFromPts(pts);
+  validations.push({designer,jornada,rodada,data,errors:[...currentErrors],matPts:pts,matLevel:mat.level,id:Date.now()});
+  clearForm();
+  const msg=document.getElementById('save-msg');
+  msg.style.display='flex'; setTimeout(()=>msg.style.display='none',3000);
+}
+function clearForm(){
+  document.getElementById('f-designer').value='';
+  document.getElementById('f-jornada').value='';
+  document.getElementById('f-rodada').value='1';
+  document.getElementById('f-data').value='';
+  checkedItems=new Set(); currentErrors=[]; selectedErrorType=null;
+  buildChecklist(); updateMeter(); buildCatTabs(); buildErrorTypeList(); updateSelectedPreview(); renderCurrentErrors();
+}
+
+// NAV
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nav-'+page).classList.add('active');
+  if(page==='historico') renderHistorico();
+  if(page==='dashboard') renderDashboard();
+  if(page==='designers') renderDesigners();
+  if(page==='taxonomia') renderTaxonomia();
+  if(page==='regua') renderRegua();
+}
+
+// HISTÓRICO
+function renderHistorico(){
+  const el=document.getElementById('hist-content');
+  if(!validations.length){ el.innerHTML='<div class="empty-state"><i class="ti ti-database-off"></i>Nenhuma validação registrada ainda</div>'; return; }
+  el.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Data</th><th>Designer</th><th>Jornada</th><th>Rodada</th><th>Maturidade</th><th>Erros</th><th>Evitáveis</th><th>Críticos</th></tr></thead>
+    <tbody>${validations.slice().reverse().map(v=>{
+      const evit=v.errors.filter(e=>e.avoidable).length;
+      const crit=v.errors.filter(e=>e.sev==='critico').length;
+      return `<tr>
+        <td style="color:var(--text2);font-size:12px;white-space:nowrap">${v.data}</td>
+        <td style="font-weight:500">${v.designer}</td>
+        <td style="font-size:12px">${v.jornada}</td>
+        <td>${v.rodada}ª</td>
+        <td>${matPill(v.matLevel)} <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${v.matPts}pts</span></td>
+        <td>${v.errors.length}</td>
+        <td>${evit>0?`<span class="badge badge-evitavel">${evit}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+        <td>${crit>0?`<span class="badge badge-critico">${crit}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+// DASHBOARD
+function renderDashboard(){
+  const el=document.getElementById('dash-content');
+  if(!validations.length){ el.innerHTML='<div class="empty-state"><i class="ti ti-chart-bar"></i>Registre validações para ver as métricas</div>'; return; }
+  const allE=validations.flatMap(v=>v.errors);
+  const total=allE.length;
+  const evit=allE.filter(e=>e.avoidable).length;
+  const aprov1=validations.filter(v=>v.rodada===1).length;
+  const taxaAprov=Math.round((aprov1/validations.length)*100);
+  const retrabalho=validations.filter(v=>v.rodada>1).length;
+  const avgPts=validations.reduce((s,v)=>s+v.matPts,0)/validations.length;
+  const avgMat=matFromPts(Math.round(avgPts));
+  const matCounts={alta:validations.filter(v=>v.matLevel==='alta').length,media:validations.filter(v=>v.matLevel==='media').length,baixa:validations.filter(v=>v.matLevel==='baixa').length};
+  const cats=Object.keys(TAXONOMY);
+  const catC=cats.map(c=>({cat:c,n:allE.filter(e=>e.cat===c).length}));
+  const maxCat=Math.max(...catC.map(c=>c.n),1);
+  const sevs=['critico','alto','medio','baixo'];
+  const sevC=sevs.map(s=>({sev:s,n:allE.filter(e=>e.sev===s).length}));
+  const maxSev=Math.max(...sevC.map(s=>s.n),1);
+  const topErrors=Object.values(allE.reduce((acc,e)=>{const k=e.cat+'|'+e.name;acc[k]={name:e.name,cat:e.cat,sev:e.sev,n:(acc[k]?.n||0)+1};return acc;},{})).sort((a,b)=>b.n-a.n).slice(0,5);
+
+  el.innerHTML=`
+    <div class="metric-grid">
+      <div class="metric-card"><div class="metric-label">Validações</div><div class="metric-value">${validations.length}</div></div>
+      <div class="metric-card"><div class="metric-label">Aprovação 1ª rodada</div><div class="metric-value">${taxaAprov}%</div><div class="metric-sub">${aprov1} de ${validations.length}</div></div>
+      <div class="metric-card"><div class="metric-label">Erros evitáveis</div><div class="metric-value" style="color:#A32D2D">${total>0?Math.round((evit/total)*100):0}%</div><div class="metric-sub">${evit} de ${total}</div></div>
+      <div class="metric-card"><div class="metric-label">Maturidade média</div><div class="metric-value" style="color:${avgMat.color}">${avgMat.label.split(' ')[0]}</div><div class="metric-sub">${avgPts.toFixed(1)} / ${MAX_PTS} pts</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Distribuição de maturidade</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${MAT.map(t=>`<div style="flex:1;min-width:110px;padding:12px;border-radius:var(--radius);background:${t.bg};border:1px solid ${t.border}">
+          <div style="font-size:11px;font-weight:500;color:${t.color};margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em">${t.label}</div>
+          <div style="font-size:26px;font-weight:500;color:${t.color};line-height:1">${matCounts[t.level]}</div>
+          <div style="font-size:11px;color:${t.color};opacity:0.75;margin-top:3px">${Math.round((matCounts[t.level]/validations.length)*100)}% das entregas</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Erros por categoria</div>
+        ${catC.map(c=>`<div class="progress-row"><div class="progress-label"><span>${c.cat}</span><span>${c.n}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${Math.round((c.n/maxCat)*100)}%;background:#534AB7"></div></div></div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">Erros por gravidade</div>
+        ${sevC.map(s=>`<div class="progress-row"><div class="progress-label"><span>${SEV[s.sev].label}</span><span>${s.n}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${Math.round((s.n/maxSev)*100)}%;background:${SEV[s.sev].color}"></div></div></div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Erros mais frequentes</div>
+      ${!topErrors.length?'<div style="font-size:13px;color:var(--text3)">—</div>':topErrors.map((e,i)=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:11px;color:var(--text3);min-width:18px;font-family:var(--mono)">${i+1}</span>
+          <span style="flex:1;font-size:13px">${e.name}</span>
+          <span class="badge badge-cat">${e.cat}</span>
+          ${sevBadge(e.sev)}
+          <span style="font-size:13px;font-weight:500;min-width:24px;text-align:right;font-family:var(--mono)">${e.n}×</span>
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title">Retrabalho</div>
+      <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+        <div><div class="metric-label">Nova rodada necessária</div><div style="font-size:26px;font-weight:500;margin-top:4px">${retrabalho}</div></div>
+        <div><div class="metric-label">Taxa de retrabalho</div><div style="font-size:26px;font-weight:500;margin-top:4px">${Math.round((retrabalho/validations.length)*100)}%</div></div>
+        <div><div class="metric-label">3ª rodada ou mais</div><div style="font-size:26px;font-weight:500;margin-top:4px">${validations.filter(v=>v.rodada>=3).length}</div></div>
+      </div>
+    </div>`;
+}
+
+// POR DESIGNER
+function renderDesigners(){
+  const el=document.getElementById('designers-content');
+  if(!validations.length){ el.innerHTML='<div class="empty-state"><i class="ti ti-users"></i>Registre validações para ver métricas por designer</div>'; return; }
+  const designers=[...new Set(validations.map(v=>v.designer))];
+  el.innerHTML=designers.map(d=>{
+    const vals=validations.filter(v=>v.designer===d);
+    const errors=vals.flatMap(v=>v.errors);
+    const total=errors.length;
+    const evit=errors.filter(e=>e.avoidable).length;
+    const aprov1=vals.filter(v=>v.rodada===1).length;
+    const taxaAprov=Math.round((aprov1/vals.length)*100);
+    const avgPts=vals.reduce((s,v)=>s+v.matPts,0)/vals.length;
+    const matT=matFromPts(Math.round(avgPts));
+    const initials=d.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const recent=vals.slice(-6);
+    const trendBars=recent.map(v=>{
+      const t=MAT.find(m=>m.level===v.matLevel);
+      const h=[8,20,34][['baixa','media','alta'].indexOf(v.matLevel)]||8;
+      return `<div class="mat-trend-bar" style="height:${h}px;background:${t.fill}"></div>`;
+    }).join('');
+    return `<div class="designer-card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="width:38px;height:38px;border-radius:50%;background:${matT.bg};display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;color:${matT.color};flex-shrink:0;border:1px solid ${matT.border}">${initials}</div>
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:15px">${d}</div>
+          <div style="font-size:12px;color:var(--text2)">${vals.length} validações · ${total} erros · média ${avgPts.toFixed(1)} pts</div>
+        </div>
+        ${matPill(matT.level)}
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:${recent.length>1?'14px':'0'};">
+        <div class="metric-card" style="flex:1;min-width:80px;"><div class="metric-label">Aprov. 1ª rodada</div><div class="metric-value">${taxaAprov}%</div></div>
+        <div class="metric-card" style="flex:1;min-width:80px;"><div class="metric-label">Erros evitáveis</div><div class="metric-value" style="${evit>0?'color:#A32D2D':''}">${total>0?Math.round((evit/total)*100):0}%</div></div>
+        <div class="metric-card" style="flex:1;min-width:80px;"><div class="metric-label">Críticos</div><div class="metric-value">${errors.filter(e=>e.sev==='critico').length}</div></div>
+        <div class="metric-card" style="flex:1;min-width:80px;"><div class="metric-label">Retrabalho</div><div class="metric-value">${vals.filter(v=>v.rodada>1).length}×</div></div>
+      </div>
+      ${recent.length>1?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:5px">Evolução de maturidade (últimas ${recent.length} entregas)</div><div class="mat-trend">${trendBars}</div></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// TAXONOMIA
+function renderTaxonomia(){
+  document.getElementById('taxonomia-content').innerHTML=Object.entries(TAXONOMY).map(([cat,types])=>`
+    <div class="card">
+      <div class="card-title">${cat}</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Tipo de erro</th><th>Gravidade</th><th>Evitável</th></tr></thead>
+        <tbody>${types.map(t=>`<tr>
+          <td>${t.name}</td>
+          <td>${sevBadge(t.sev)}</td>
+          <td>${t.avoidable?'<span class="badge badge-evitavel"><i class="ti ti-alert-triangle"></i> Sim</span>':'<span style="color:var(--text3)">—</span>'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>`).join('');
+}
+
+// RÉGUA
+function renderRegua(){
+  document.getElementById('regua-content').innerHTML=MAT.map(t=>`
+    <div class="regua-card" style="border-left:3px solid ${t.fill}">
+      <div style="font-size:14px;font-weight:500;color:${t.color};margin-bottom:8px">${t.label} · ${t.min}–${t.max} pontos</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${CHECKLIST.map(c=>`
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text2);">
+            <i class="ti ti-${t.level==='alta'?'check':t.level==='media'?'minus':'x'}" style="color:${t.fill};flex-shrink:0;margin-top:2px;font-size:14px"></i>
+            <span style="flex:1">${c.text}</span>
+            <span style="font-size:11px;color:var(--text3);font-family:var(--mono);flex-shrink:0">+${c.pts}pt${c.pts>1?'s':''}</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// INIT
+buildChecklist();
+updateMeter();
+buildCatTabs();
+buildErrorTypeList();
+updateSelectedPreview();
+renderRegua();
+renderTaxonomia();
+</script>
+</body>
+</html>
